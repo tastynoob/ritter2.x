@@ -13,8 +13,6 @@ class SyncHandshake extends Bundle {
 }
 
 
-
-
 /** bin to gray code  */
 object GrayCode {
     def apply(x: UInt): UInt = {
@@ -53,4 +51,15 @@ object Shift2Byte {
     }
 }
 
-
+object myUtils{
+    def merge(dst:UInt,src:UInt,mask:UInt):UInt = {
+        assert(dst.getWidth == src.getWidth, "dst and src width must be equal")
+        assert(dst.getWidth % 8 == 0, "dst width must be multiple of 8")
+        assert(mask.getWidth == (dst.getWidth/8), "mask width must be equal to dst width/8")
+        val res = Wire(Vec(dst.getWidth/8,UInt(8.W)))
+        for(i <- 0 until mask.getWidth){
+            res(i) := Mux(mask(i),src(i*8+7,i*8),dst(i*8+7,i*8))
+        }
+        res.asUInt
+    }
+}

@@ -27,22 +27,22 @@ class ICache_tagArray(tag_size: Int, line_nums: Int) extends Module {
     val wc = IO(new Bundle {
         val wen = Input(Bool())
         val index = Input(UInt(log2Up(line_nums).W))
+        val tag = Input(UInt(tag_size.W))
         /** update the cache line valid */
         val vld_update = Input(Bool())
         val vld = Input(Bool())
-        val tag = Input(UInt(tag_size.W))
     })
 
     //line_nums must be power of 2 and larger than 2,otherwise throw exception
     assert(line_nums > 2 && isPow2(line_nums))
 
     /** the tag_valid arrays registers */
-    val vld_arrays = RegInit(VecInit(Seq.fill(line_nums)(false.B)))
+    val vld_array = RegInit(VecInit(Seq.fill(line_nums)(false.B)))
 
     /** the tag_tag arrays registers */
     val sram = Module(new RAM_pdual(tag_size, line_nums))
     when(wc.vld_update) {
-        vld_arrays(wc.index) := wc.vld
+        vld_array(wc.index) := wc.vld
     }
 
     sram.wc.wen := wc.wen
@@ -53,7 +53,7 @@ class ICache_tagArray(tag_size: Int, line_nums: Int) extends Module {
     sram.rc.addr := rc.index
 
     val tag = sram.rc.dout
-    val valid = RegNext(vld_arrays(rc.index))
+    val valid = RegNext(vld_array(rc.index))
 
     rc.vld := valid
     rc.tag := tag
@@ -114,7 +114,8 @@ class ICache_LRU(wayNums: Int, lineNums: Int) extends Module {
         val hit_sel = Input(UInt(wayNums.W))
     })
     /** lru arrays : lineNums * lruWid */
-    val lru_rf = Reg(Vec(lineNums, UInt(lruWid.W)))
+    //val lru_rf = Reg(Vec(lineNums, UInt(lruWid.W)))
+    val lru_rf = RegInit(VecInit(Seq.fill(lineNums)(0.U(lruWid.W))))
     val lru_step = Reg(UInt(lruWid.W))
     val index = Reg(UInt(log2Up(lineNums).W))
     val lru_update_sel = Mux(hit.vld, hit.hit_sel, rc.lru_sel.asUInt)
@@ -202,7 +203,7 @@ class ICacheWay extends Module with ICacheConfig {
     fetch.vld := tag_array.rc.vld
     fetch.tag := tag_array.rc.tag
 
-    /** data array with dirty */
+    /** data array without dirty */
     val data_array = Module(new ICache_dataArray(icacheLineWid, lineNums))
     data_array.rc.ren := fetch.ren
     data_array.rc.index := fetch.index

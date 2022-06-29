@@ -24,7 +24,10 @@ trait ICacheConfig{
     val icacheAddrWid = GConfig.pcWid
     /** the wid of core fetch data output */
     val icacheDataWid = GConfig.fetchWid
-    /** the wid of cacheline_data bit  */
+    /**
+     * the wid of cacheline_data bit
+     * icache refill must as wide as cacline wid
+     * */
     val icacheLineWid = icacheDataWid
     /** the number of cacheline */
     val lineNums = 16
@@ -45,14 +48,17 @@ trait DCacheConfig{
     val dcacheAddrWid = GConfig.xlen
     /** the wid of dcache and memf data output */
     val dcacheDataWid = GConfig.xlen
-    /** the wid of dcacheline data */
+    /**
+     * the wid of dcacheline data
+     * dCache refill must as wide as cacheline wid
+    */
     val dcacheLineWid = 128
     /** the number of bank */
-    val bankNums = 2
-    /** the number of cacheline */
-    val lineNums = 16
+    val bankNums = 1
+    /** the number of cacheline for each bank */
+    val lineNums = 128 / bankNums
     /** the number of cacheway */
-    val wayNums = 8
+    val wayNums = 4
     /** the wid of offset bit */
     val offsetWid = log2Up(dcacheLineWid/8) //4
     /** the wid of index bit */
@@ -61,5 +67,7 @@ trait DCacheConfig{
     val tagWid = dcacheAddrWid - indexWid - offsetWid
 
     /** dcache and memf can have the different dataWid */
+    /** dcache and memf has the same dataWid */
+    val issyncData = dcacheDataWid == dcacheLineWid
 }
 
